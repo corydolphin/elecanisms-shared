@@ -14,7 +14,7 @@
 #define GET_VALS    2   // Vendor request that returns 2 unsigned integer values
 #define PRINT_VALS  3   // Vendor request that prints 2 unsigned integer values 
 
-uint16_t val1, val2;
+uint16_t val1, val2, analog_0;
 
 //void ClassRequests(void) {
 //    switch (USB_setup.bRequest) {
@@ -39,6 +39,7 @@ void VendorRequests(void) {
             BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
             break;
         case GET_VALS:
+            led_on(&led2);
             temp.w = val1;
             BD[EP0IN].address[0] = temp.b[0];
             BD[EP0IN].address[1] = temp.b[1];
@@ -79,11 +80,19 @@ void init(void){
     init_pin();
     init_oc();
 
+
+    timer_setPeriod(&timer3, 0.95);
+    timer_start(&timer3);
+
+    pin_digitalOut(&D[0]);
+    pin_digitalOut(&D[1]);
+    oc_servo(&oc1, &D[0], &timer1, 20E-3, 6E-4, 2.2E-3, 0);
+    oc_servo(&oc2, &D[1], &timer2, 20E-3, 6E-4, 2.2E-3, 0);
+
     led_on(&led1);
-    pin_analogIn(&A[0]);
-    pin_digitalOut(&D[0]);    
-    val1 = 0;
-    val2 = 0;
+    val1 = 5;
+    val2 = 2;
+    analog_0  = 0;
 
     InitUSB();
 }
@@ -91,20 +100,29 @@ void init(void){
 
 int16_t main(void) {
     init();
-
-    timer_setPeriod(&timer2, 0.5);
-    timer_start(&timer2);
               
     while (USB_USWSTAT!=CONFIG_STATE) {     // while the peripheral is not configured...
         ServiceUSB();                       // ...service USB requests
-    }   
-    while (1) {
-        ServiceUSB();                       // service any pending USB requests
-        if (timer_flag(&timer2)) {
-            timer_lower(&timer2);
-            led_toggle(&led1);
     }
 
+    while (1) {
+        ServiceUSB();                       // service any pending USB requests
+        pin_write(&D[0], val1);
+        pin_write(&D[1], val2);
+
+        if (timer_flag(&timer3)) {
+            timer_lower(&timer3);
+            led_toggle(&led1);
+            // if(analog_0 % 2 == 0){
+            //     val1 = 0;
+            //     val2= 65534;
+            // }
+            // else{
+            //     val1 = 65534;
+            //     val2= 0;
+            // }
+            // analog_0 +=1;
+        }
     }
 }
 
