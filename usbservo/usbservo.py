@@ -42,7 +42,14 @@ class USBServo:
             print "Could not send PRINT_VALS vendor request."
 
 
+def ticksToDist(ticks):
+    return 0.029*ticks - 3.955
+
 if __name__ == '__main__':
     dev = USBServo()
     time.sleep(1)
-    dev.set_vals(0,0)
+    for i in range(0,65000,5000):
+        for j in range(0,65000,50):
+            dev.set_vals(i,j)
+            time.sleep(0.001)
+            print "%s,%s,%s"%(i,j,ticksToDist(dev.get_vals()[0]))
