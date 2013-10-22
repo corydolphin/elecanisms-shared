@@ -29,11 +29,11 @@ class USBServo:
 
     def get_vals(self):
         try:
-            ret = self.dev.ctrl_transfer(0xC0, GET_VALS, 0, 0, 4)
+            ret = self.dev.ctrl_transfer(0xC0, GET_VALS, 0, 0, 8)
         except usb.core.USBError:
             print "Could not send GET_VALS vendor request."
         else:
-            return [int(ret[0])+int(ret[1])*256, int(ret[2])+int(ret[3])*256]
+            return [int(ret[0])+int(ret[1])*256, int(ret[2])+int(ret[3])*256, int(ret[4])+int(ret[5])*256, int(ret[6])+int(ret[7])*256]
 
     def print_vals(self):
         try:
@@ -42,14 +42,10 @@ class USBServo:
             print "Could not send PRINT_VALS vendor request."
 
 
-def ticksToDist(ticks):
-    return 0.029*ticks - 3.955
-
 if __name__ == '__main__':
     dev = USBServo()
     time.sleep(1)
-    for i in range(0,65000,5000):
-        for j in range(0,65000,50):
-            dev.set_vals(i,j)
-            time.sleep(0.001)
-            print "%s,%s,%s"%(i,j,ticksToDist(dev.get_vals()[0]))
+    while (True):
+        time.sleep(0.1)
+        print "%s, %s, %s, %s"%(dev.get_vals()[0], dev.get_vals()[1], dev.get_vals()[2], dev.get_vals()[3])
+
